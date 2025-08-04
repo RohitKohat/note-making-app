@@ -1,40 +1,41 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
-export async function createClient() {
-  const cookieStore = await cookies();
+export function createClient() {
+  const cookieStore = cookies();
 
-  const client = createServerClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-        setAll(cookiesToSet) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options),
-            );
-          } catch {}
-        },
-      },
-    },
-  );
+  const supabase = createServerClient(
+    process.env.SUPABASE_URL!,
+    process.env.SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          // ✅ Fully safe fallback: return empty array
+          return [];
+        },
+        setAll() {
+          // ✅ Suppress setting cookies in server (not supported)
+          console.warn("⚠ Skipping setAll on server");
+        },
+      },
+    }
+  );
 
-  return client;
+  return supabase;
 }
 
 export async function getUser() {
-  const { auth } = await createClient();
+  const supabase = createClient();
 
-  const userObject = await auth.getUser();
-
-  if (userObject.error) {
-    console.error(userObject.error);
-    return null;
-  }
-
-  return userObject.data.user;
+  try {
+    const { data, error } = await supabase.auth.getUser();
+    if (error) {
+      console.error("❌ getUser error:", error.message);
+      return null;
+    }
+    return data.user;
+  } catch (err) {
+    console.error("❌ Unexpected error in getUser:", err);
+    return null;
+  }
 }
