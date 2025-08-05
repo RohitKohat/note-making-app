@@ -1,29 +1,18 @@
-import { createClient } from "@/auth/server";
-import { prisma } from "@/db/prisma"; // ✅ This is the Prisma import line
-import { NextResponse } from "next/server";
+import { prisma } from "@/db/prisma";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function POST() {
-  try {
-    const { auth } = await createClient();
+export async function POST(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const userId = searchParams.get("userId") || "";
+ 
+  const { id } = await prisma.note.create({
+    data: {
+      authorId: userId,
+      text: "",
+    },
+  });
 
-    const {
-      data: { user },
-    } = await auth.getUser();
-
-    if (!user || !user.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const note = await prisma.note.create({ // ✅ This is where Prisma is used
-      data: {
-        authorId: user.id,
-        text: "",
-      },
-    });
-
-    return NextResponse.json({ noteId: note.id });
-  } catch (error) {
-    console.error("Error creating note:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
-  }
+  return NextResponse.json({
+    noteId: id,
+  });
 }
