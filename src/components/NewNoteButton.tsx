@@ -3,7 +3,7 @@
 import { User } from "@supabase/supabase-js";
 import { Button } from "./ui/button";
 import { Loader2 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { v4 as uuidv4 } from "uuid";
 import { createNoteAction } from "@/actions/notes";
@@ -17,23 +17,23 @@ function NewNoteButton({ user }: Props) {
   const [loading, setLoading] = useState(false);
 
   const handleClickNewNoteButton = async () => {
+    console.log("🚀 Clicked New Note Button");
+    console.log("👤 user:", user);
+
     if (!user) {
-      // ✅ Redirect to login if not authenticated
-      return router.push("/login");
+      console.warn("⚠ No user found, redirecting to login.");
+      router.push("/login");
+      return;
     }
 
-    try {
-      setLoading(true);
+    setLoading(true);
+    const uuid = uuidv4();
 
-      const uuid = uuidv4();
-      await createNoteAction(uuid);
+    const result = await createNoteAction(uuid);
+    console.log("✅ Note creation result:", result);
 
-      router.push(`/?noteId=${uuid}&toastType=newNote`);
-    } catch (err) {
-      console.error("❌ Error creating note:", err);
-    } finally {
-      setLoading(false);
-    }
+    router.push(`/?noteId=${uuid}&toastType=newNote`);
+    setLoading(false);
   };
 
   return (
