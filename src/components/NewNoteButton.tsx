@@ -11,19 +11,18 @@ import { createNoteAction } from "@/actions/notes";
 function NewNoteButton() {
   const router = useRouter();
   const supabase = createClientComponentClient();
-  const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState<any>(null); // or use `User` type from Supabase
 
-  // ✅ Fetch user on client
   useEffect(() => {
+    // ✅ Fetch user client-side
     const getUser = async () => {
       const { data, error } = await supabase.auth.getUser();
-      if (data?.user) {
-        setUser(data.user);
-      }
+      if (!error) setUser(data.user);
     };
+
     getUser();
-  }, [supabase]);
+  }, []);
 
   const handleClickNewNoteButton = async () => {
     console.log("🚀 Clicked New Note Button");
