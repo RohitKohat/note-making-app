@@ -1,41 +1,35 @@
+"use client";
+
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { Button } from "./ui/button";
 import { Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { v4 as uuidv4 } from "uuid";
 import { createNoteAction } from "@/actions/notes";
-import { createBrowserClient } from "@supabase/ssr";
 
 function NewNoteButton() {
   const router = useRouter();
+  const supabase = createClientComponentClient();
+  const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
 
-  // 🧠 Fetch the user on client mount
+  // ✅ Fetch user on client
   useEffect(() => {
     const getUser = async () => {
-      const supabase = createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      );
       const { data, error } = await supabase.auth.getUser();
-
-      if (error || !data.user) {
-        console.warn("⚠ Could not fetch user:", error?.message);
-        setUserId(null);
-      } else {
-        setUserId(data.user.id);
+      if (data?.user) {
+        setUser(data.user);
       }
     };
-
     getUser();
-  }, []);
+  }, [supabase]);
 
   const handleClickNewNoteButton = async () => {
     console.log("🚀 Clicked New Note Button");
-    console.log("👤 userId:", userId);
+    console.log("👤 user:", user);
 
-    if (!userId) {
+    if (!user) {
       console.warn("⚠ No user found, redirecting to login.");
       router.push("/login");
       return;
