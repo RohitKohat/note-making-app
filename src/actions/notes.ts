@@ -6,24 +6,27 @@ import { handleError } from "@/lib/utils";
 import openai from "@/openai";
 import { ChatCompletionMessageParam } from "openai/resources/index.mjs";
 
-export const createNoteAction = async (noteId: string) => {
-  try {
-    const user = await getUser();
-    if (!user) throw new Error("You must be logged in to create a note");
-
-    await prisma.note.create({
-      data: {
-        id: noteId,
-        authorId: user.id,
-        text: "",
-      },
-    });
-
-    return { errorMessage: null };
-  } catch (error) {
-    return handleError(error);
-  }
-};
+export const createNoteAction = async (
+    noteId: string
+  ): Promise<{ noteId: string | null; errorMessage: string | null }> => {
+    try {
+      const user = await getUser();
+      if (!user) throw new Error("You must be logged in to create a note");
+  
+      await prisma.note.create({
+        data: {
+          id: noteId,
+          authorId: user.id,
+          text: "",
+        },
+      });
+  
+      return { noteId, errorMessage: null };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Error";
+      return { noteId: null, errorMessage };
+    }
+  };
 
 export const updateNoteAction = async (noteId: string, text: string) => {
   try {
@@ -92,15 +95,13 @@ export const askAIAboutNotesAction = async (
           Make sure that your answers are not too verbose and you speak succinctly. 
           Your responses MUST be formatted in clean, valid HTML with proper structure. 
           Use tags like <p>, <strong>, <em>, <ul>, <ol>, <li>, <h1> to <h6>, and <br> when appropriate. 
-          Do NOT wrap the entire response in a single <p> tag unless it's a single paragraph. 
-          Avoid inline styles, JavaScript, or custom attributes.
-          
+
           Rendered like this in JSX:
           <p dangerouslySetInnerHTML={{ __html: YOUR_RESPONSE }} />
-    
+
           Here are the user's notes:
           ${formattedNotes}
-          `,
+      `,
     },
   ];
 
@@ -116,5 +117,5 @@ export const askAIAboutNotesAction = async (
     messages,
   });
 
-  return completion.choices[0].message.content || "A problem has occurred";
+  return completion.choices[0].message.content || "A problem has occurred";
 };

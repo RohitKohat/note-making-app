@@ -2,50 +2,50 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { v4 as uuidv4 } from "uuid";
+import { Button } from "./ui/button";
 import { Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button"; // ✅ Check this path
+import { createNoteAction } from "@/actions/notes";
 import type { User } from "@supabase/supabase-js";
-import { createNoteAction } from "@/actions/notes"; // ✅ Make sure this returns { noteId }
 
 type Props = {
-  user: User | null;
+  user: User | null;
 };
 
 export default function NewNoteButton({ user }: Props) {
-  const [loading, setLoading] = useState(false);
-  const router = useRouter();
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
 
-  const handleClick = async () => {
-    if (!user) {
-      router.push("/login");
-      return;
-    }
+  const handleClick = async () => {
+    if (!user) {
+      router.push("/login");
+      return;
+    }
 
-    setLoading(true);
-    try {
-      const result = await createNoteAction();
+    setLoading(true);
 
-      if (!result || result.errorMessage || !result.noteId) {
-        alert("❌ Failed to create a new note.");
-        return;
-      }
+    const uuid = uuidv4();
+    const result = await createNoteAction(uuid);
 
-      router.push(`/?noteId=${result.noteId}&toastType=newNote`);
-    } catch (err) {
-      console.error("❌ Error creating note:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    if (!result || result.errorMessage || !result.noteId) {
+      console.error("❌ Failed to create note:", result?.errorMessage);
+      alert("Failed to create note. Please try again.");
+      setLoading(false);
+      return;
+    }
 
-  return (
-    <Button
-      onClick={handleClick}
-      variant="secondary"
-      className="w-24"
-      disabled={loading}
-    >
-      {loading ? <Loader2 className="animate-spin h-4 w-4" /> : "New Note"}
-    </Button>
+    router.push(`/?noteId=${result.noteId}&toastType=newNote`);
+    setLoading(false);
+  };
+
+  return (
+    <Button
+      onClick={handleClick}
+      disabled={loading}
+      variant="secondary"
+      className="w-24"
+    >
+      {loading ? <Loader2 className="animate-spin w-4 h-4" /> : "New Note"}
+    </Button>
   );
 }
