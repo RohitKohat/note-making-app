@@ -1,3 +1,5 @@
+// app/page.tsx or app/page.tsx (or wherever your HomePage is)
+
 import { getUser } from "@/auth/server";
 import AskAIButton from "@/components/AskAIButton";
 import NewNoteButton from "@/components/NewNoteButton";
@@ -6,15 +8,15 @@ import HomeToast from "@/components/HomeToast";
 import { prisma } from "@/db/prisma";
 
 type Props = {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+  searchParams: { [key: string]: string | string[] | undefined };
 };
 
 async function HomePage({ searchParams }: Props) {
-  const noteIdParam = (await searchParams).noteId;
-  const user = await getUser();
+  const user = await getUser(); // ✅ get user on server
+  const noteIdParam = searchParams.noteId;
 
   const noteId = Array.isArray(noteIdParam)
-    ? noteIdParam![0]
+    ? noteIdParam[0]
     : noteIdParam || "";
 
   const note = await prisma.note.findUnique({
