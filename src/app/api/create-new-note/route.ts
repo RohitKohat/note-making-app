@@ -1,18 +1,30 @@
+import { NextResponse } from "next/server";
 import { prisma } from "@/db/prisma";
-import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/auth/server"; // your working Supabase server client
 
-export async function POST(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-  const userId = searchParams.get("userId") || "";
- 
-  const { id } = await prisma.note.create({
-    data: {
-      authorId: userId,
-      text: "",
-    },
-  });
+export async function POST() {
+  const supabase = await createClient();
 
-  return NextResponse.json({
-    noteId: id,
-  });
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+
+  if (error || !user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const newNote = await prisma.note.create({
+      data: {
+        authorId: user.id,
+        text: "",
+      },
+    });
+
+    return NextResponse.json({ noteId: newNote.id });
+  } catch (err) {
+    console.error("Error creating note:", err);
+    return NextResponse.json({ error: "Note creation failed" }, { status: 500 });
+  }
 }

@@ -1,35 +1,51 @@
 "use client";
 
-import { Button } from "./ui/button";
-import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { v4 as uuidv4 } from "uuid";
-import { createNoteAction } from "@/actions/notes";
+import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button"; // ✅ Check this path
+import type { User } from "@supabase/supabase-js";
+import { createNoteAction } from "@/actions/notes"; // ✅ Make sure this returns { noteId }
 
-export default function NewNoteButton() {
-  const router = useRouter();
+type Props = {
+  user: User | null;
+};
+
+export default function NewNoteButton({ user }: Props) {
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
-  const handleClickNewNoteButton = async () => {
+  const handleClick = async () => {
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+
     setLoading(true);
+    try {
+      const result = await createNoteAction();
 
-    const uuid = uuidv4();
-    const result = await createNoteAction(uuid);
-    console.log("✅ Note creation result:", result);
+      if (!result || result.errorMessage || !result.noteId) {
+        alert("❌ Failed to create a new note.");
+        return;
+      }
 
-    router.push(`/?noteId=${uuid}&toastType=newNote`);
-    setLoading(false);
+      router.push(`/?noteId=${result.noteId}&toastType=newNote`);
+    } catch (err) {
+      console.error("❌ Error creating note:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <Button
-      onClick={handleClickNewNoteButton}
+      onClick={handleClick}
       variant="secondary"
       className="w-24"
       disabled={loading}
     >
-      {loading ? <Loader2 className="animate-spin" /> : "New Note"}
+      {loading ? <Loader2 className="animate-spin h-4 w-4" /> : "New Note"}
     </Button>
-  );
+  );
 }
