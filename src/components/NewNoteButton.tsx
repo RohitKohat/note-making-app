@@ -1,28 +1,20 @@
 "use client";
 
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { User } from "@supabase/supabase-js";
 import { Button } from "./ui/button";
 import { Loader2 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { v4 as uuidv4 } from "uuid";
 import { createNoteAction } from "@/actions/notes";
 
-function NewNoteButton() {
+type Props = {
+  user: User | null;
+};
+
+function NewNoteButton({ user }: Props) {
   const router = useRouter();
-  const supabase = createClientComponentClient();
   const [loading, setLoading] = useState(false);
-  const [user, setUser] = useState<any>(null); // or use `User` type from Supabase
-
-  useEffect(() => {
-    // ✅ Fetch user client-side
-    const getUser = async () => {
-      const { data, error } = await supabase.auth.getUser();
-      if (!error) setUser(data.user);
-    };
-
-    getUser();
-  }, []);
 
   const handleClickNewNoteButton = async () => {
     console.log("🚀 Clicked New Note Button");
