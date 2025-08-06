@@ -1,4 +1,5 @@
 "use client";
+
 import { User } from "@supabase/supabase-js";
 import { Button } from "./ui/button";
 import { Loader2 } from "lucide-react";
@@ -13,21 +14,21 @@ type Props = {
 
 function NewNoteButton({ user }: Props) {
   const router = useRouter();
-
   const [loading, setLoading] = useState(false);
 
   const handleClickNewNoteButton = async () => {
     if (!user) {
       router.push("/login");
-    } else {
-      setLoading(true);
-
-      const uuid = uuidv4();
-      await createNoteAction(uuid);
-      router.push(`/?noteId=${uuid}&toastType=newNote`);
-
-      setLoading(false);
+      return;
     }
+
+    setLoading(true);
+    const uuid = uuidv4();
+
+    await createNoteAction(uuid, user.id); // ✅ pass user.id from client
+
+    router.push(`/?noteId=${uuid}&toastType=newNote`);
+    setLoading(false);
   };
 
   return (

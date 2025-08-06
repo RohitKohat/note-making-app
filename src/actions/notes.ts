@@ -6,15 +6,14 @@ import { handleError } from "@/lib/utils";
 import openai from "@/openai";
 import { ChatCompletionMessageParam } from "openai/resources/index.mjs";
 
-export const createNoteAction = async (noteId: string) => {
+export const createNoteAction = async (noteId: string, userId: string) => {
   try {
-    const user = await getUser();
-    if (!user) throw new Error("You must be logged in to create a note");
+    if (!userId) throw new Error("Missing user ID");
 
     await prisma.note.create({
       data: {
         id: noteId,
-        authorId: user.id,
+        authorId: userId,
         text: "",
       },
     });
